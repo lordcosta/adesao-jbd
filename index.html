@@ -74,6 +74,7 @@
     <img src="logo.png" alt="Logo JBD">
   </div>
   <h1>Adesão ao Programa REURB</h1>
+  <p id="contadorAdesoes" style="text-align:right; font-size:13px; color:#555;"></p>
   <form id="formAdesao">
     <label>Nome completo: <input type="text" id="nome" required></label>
     <label>RG: <input type="text" id="rg" required></label>
@@ -94,8 +95,9 @@
     <label>Área do imóvel (m²): <input type="text" id="area" pattern="^[0-9]+([\.,][0-9]{1,2})?$" required></label>
     <label>Município: <input type="text" id="municipio" required></label>
     <label>Bairro: <input type="text" id="bairro" required></label>
-    <label>Rua: <input type="text" id="rua" required></label>
+    <label>Logradouro (Rua, Avenida, Travessa etc.): <input type="text" id="rua" required></label>
     <label>Número do imóvel: <input type="text" id="numero" required></label>
+    <label>Complemento (Ex: casa B, fundos, apto 101): <input type="text" id="complemento"></label>
     <label>Telefone: <input type="tel" id="telefone" required></label>
     <label>Tipo de imóvel:
       <select id="tipo" required>
@@ -114,8 +116,8 @@
     </label>
     <button type="submit" id="enviar" disabled>✔ Aceito e Enviar</button>
   </form>
+<p style="text-align: right; font-size: 12px; color: #666; margin-top: 10px;">Versão: 1.0.0</p>
 </div>
-
 <script>
 const campos = ['nome', 'rg', 'orgao', 'cpf', 'uf', 'area', 'municipio', 'bairro', 'rua', 'numero', 'telefone'];
 campos.forEach(id => document.getElementById(id).addEventListener('input', atualizarTermo));
@@ -157,9 +159,10 @@ function atualizarTermo() {
   const bairro = document.getElementById('bairro').value;
   const rua = document.getElementById('rua').value;
   const numero = document.getElementById('numero').value;
+  const complemento = document.getElementById('complemento').value;
   const telefone = document.getElementById('telefone').value;
 
-  const texto = `Eu, ${nome}, portador(a) da Carteira de Identidade n° ${rg} (${orgao}/${uf}), inscrito(a) no CPF/MF sob n° ${cpf}, abaixo assinado, detentor da posse do imóvel de ${area} m² situado na cidade de ${municipio}, Bairro ${bairro}, Rua ${rua}, n° ${numero}, telefone ${telefone}, DECLARO que possuo interesse na realização da regularização fundiária REURB, nos termos da Lei Federal nº 13.465/2017 e Decreto Federal nº 9.310, de 15 de março de 2018.
+  const texto = `Eu, ${nome}, portador(a) da Carteira de Identidade n° ${rg} (${orgao}/${uf}), inscrito(a) no CPF/MF sob n° ${cpf}, abaixo assinado, detentor da posse do imóvel de ${area} m² situado na cidade de ${municipio}, Bairro ${bairro}, Logradouro ${rua}, n° ${numero}${complemento ? ', ' + complemento : ''}, telefone ${telefone}, DECLARO que possuo interesse na realização da regularização fundiária REURB, nos termos da Lei Federal nº 13.465/2017 e Decreto Federal nº 9.310, de 15 de março de 2018.
 
 Para dar efeito a este instrumento, firmo o presente TERMO DE ADESÃO, autorizando desde já a empresa JBD PRESTADORA DE SERVIÇOS, CONSULTORIA E ASSESSORIA LTDA, situada na Avenida Rubens Rangel, 459 – Sala 105 - Campo de Aviação – Marataízes/ES, inscrita sob o CNPJ Nº 33.181.342/0001-04, a execução dos serviços que se fizerem necessários, obedecidos os princípios legais que regem a REGULARIZAÇÃO FUNDIÁRIA URBANA, bem como a emissão do contrato e respectivos boletos nos moldes da presente proposta a ser escolhida, conforme as tabelas, em anexo.
 
@@ -185,6 +188,7 @@ form.addEventListener('submit', async function(e) {
     bairro: document.getElementById('bairro').value,
     rua: document.getElementById('rua').value,
     numero: document.getElementById('numero').value,
+    complemento: document.getElementById('complemento').value,
     telefone: document.getElementById('telefone').value,
     tipo: document.getElementById('tipo').value,
     indicacao: document.getElementById('indicacao').value,
@@ -210,6 +214,17 @@ form.addEventListener('submit', async function(e) {
     alert('Erro de conexão. Verifique sua internet ou tente novamente.');
   }
 });
+// Buscar total de adesões
+fetch('https://script.google.com/macros/s/AKfycbyikDGB5BrVdZd9z-y4xui726C_yE7HidbKQk6hR4MAzJarFxoVUjelHEc4nrbdZ1St/exec')
+  .then(res => res.json())
+  .then(data => {
+    if (data.total !== undefined) {
+      document.getElementById('contadorAdesoes').innerText = `Total de adesões registradas: ${data.total}`;
+    }
+  })
+  .catch(() => {
+    document.getElementById('contadorAdesoes').innerText = `Não foi possível carregar o total de adesões.`;
+  });
 </script>
 </body>
 </html>
