@@ -74,7 +74,6 @@
     <img src="logo.png" alt="Logo JBD">
   </div>
   <h1>Adesão ao Programa REURB</h1>
-  <p id="contadorAdesoes" style="text-align:right; font-size:13px; color:#555;"></p>
   <form id="formAdesao">
     <label>Nome completo: <input type="text" id="nome" required></label>
     <label>RG: <input type="text" id="rg" required></label>
@@ -214,16 +213,6 @@ form.addEventListener('submit', async function(e) {
     alert('Erro de conexão. Verifique sua internet ou tente novamente.');
   }
 });
-// Buscar total de adesões
-fetch('https://script.google.com/macros/s/AKfycbyikDGB5BrVdZd9z-y4xui726C_yE7HidbKQk6hR4MAzJarFxoVUjelHEc4nrbdZ1St/exec')
-  .then(res => res.json())
-  .then(data => {
-    if (data.total !== undefined) {
-      document.getElementById('contadorAdesoes').innerText = `Total de adesões registradas: ${data.total}`;
-    }
-  })
-  .catch(() => {
-    document.getElementById('contadorAdesoes').innerText = `Não foi possível carregar o total de adesões.`;
   });
 </script>
 </body>
