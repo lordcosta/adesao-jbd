@@ -125,26 +125,18 @@ document.getElementById('aceite').addEventListener('change', () => {
   document.getElementById('enviar').disabled = !document.getElementById('aceite').checked;
 });
 
-function aplicarMascaraCPF(valor) {
-  return valor.replace(/\D/g, '')
-              .replace(/(\d{3})(\d)/, '$1.$2')
-              .replace(/(\d{3})(\d)/, '$1.$2')
-              .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-}
-
-function aplicarMascaraTelefone(valor) {
-  return valor.replace(/\D/g, '')
-              .replace(/(\d{2})(\d)/, '($1) $2')
-              .replace(/(\d{5})(\d)/, '$1-$2')
-              .substring(0, 15);
-}
-
 document.getElementById('cpf').addEventListener('input', e => {
-  e.target.value = aplicarMascaraCPF(e.target.value);
+  e.target.value = e.target.value.replace(/\D/g, '')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 });
 
 document.getElementById('telefone').addEventListener('input', e => {
-  e.target.value = aplicarMascaraTelefone(e.target.value);
+  e.target.value = e.target.value.replace(/\D/g, '')
+    .replace(/(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d)/, '$1-$2')
+    .substring(0, 15);
 });
 
 function atualizarTermo() {
@@ -195,7 +187,7 @@ form.addEventListener('submit', async function(e) {
   };
 
   try {
-    const resposta = await fetch('https://script.google.com/macros/s/AKfycbyikDGB5BrVdZd9z-y4xui726C_yE7HidbKQk6hR4MAzJarFxoVUjelHEc4nrbdZ1St/exec', {
+    const resposta = await fetch('https://hook.us2.make.com/lq7d92kykma0i4l17absp7huwifbmy7r', {
       method: 'POST',
       body: JSON.stringify(dados),
       headers: { 'Content-Type': 'application/json' }
@@ -213,6 +205,6 @@ form.addEventListener('submit', async function(e) {
     alert('Erro de conexão. Verifique sua internet ou tente novamente.');
   }
 });
-  </script>
+</script>
 </body>
 </html>
