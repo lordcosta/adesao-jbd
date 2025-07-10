@@ -75,7 +75,6 @@
   </div>
   <h1>Adesão ao Programa REURB</h1>
   <form id="formAdesao">
-    <!-- Campos padrão do formulário -->
     <label>Nome completo: <input type="text" id="nome" required></label>
     <label>RG: <input type="text" id="rg" required></label>
     <label>Órgão Expedidor: <input type="text" id="orgao" required></label>
@@ -109,23 +108,11 @@
     <label>Indicação (quem indicou ou como ficou sabendo): <input type="text" id="indicacao"></label>
     <label>Observação: <textarea id="observacao" style="min-height: 80px;"></textarea></label>
 
-    <!-- Novos campos de pagamento -->
-    <label>Forma de pagamento:
-      <input type="text" id="forma_pagamento" name="forma_pagamento" readonly>
-    </label>
+    <label>Forma de pagamento: <input type="text" id="forma_pagamento" name="forma_pagamento" readonly></label>
+    <label>Qtd de parcelas: <input type="number" id="qtd_parcelas" name="qtd_parcelas" readonly></label>
+    <label>Valor da parcela (R$): <input type="text" id="valor_parcela" name="valor_parcela" readonly></label>
+    <label>Valor total (R$): <input type="text" id="valor_total" name="valor_total" readonly></label>
 
-    <label>Qtd de parcelas:
-      <input type="number" id="qtd_parcelas" name="qtd_parcelas" readonly>
-    </label>
-
-  <label>Valor da parcela (R$):
-    <input type="text" id="valor_parcela" name="valor_parcela" readonly>
-  </label>
-
-  <label>Valor total (R$):
-    <input type="text" id="valor_total" name="valor_total" readonly>
-  </label>
-    
     <label>Termo de Adesão:</label>
     <textarea id="termo" readonly></textarea>
     <label class="checkbox">
@@ -134,29 +121,35 @@
     </label>
     <button type="submit" id="enviar" disabled>✔ Aceito e Enviar</button>
   </form>
-<p style="text-align: right; font-size: 12px; color: #666; margin-top: 10px;">Versão: 1.0.0</p>
+  <p style="text-align: right; font-size: 12px; color: #666; margin-top: 10px;">Versão: 1.0.0</p>
 </div>
 <script>
-// Atualiza dinamicamente o termo conforme campos são preenchidos
+function atualizarTermo() {
+  const nome = document.getElementById('nome').value;
+  const cpf = document.getElementById('cpf').value;
+  const municipio = document.getElementById('municipio').value;
+  const tipo = document.getElementById('tipo').value;
+
+  const texto = `Declaro para os devidos fins que sou ${nome}, inscrito no CPF sob o nº ${cpf}, residente no município de ${municipio}, e que desejo aderir voluntariamente ao Programa de Regularização Fundiária Urbana (REURB) como imóvel de uso ${tipo.toLowerCase()}.`;
+  document.getElementById('termo').value = texto;
+}
+
+document.getElementById('aceite').addEventListener('change', function () {
+  document.getElementById('enviar').disabled = !this.checked;
+});
+
 const campos = ['nome', 'rg', 'orgao', 'cpf', 'uf', 'area', 'municipio', 'bairro', 'rua', 'numero', 'telefone'];
 campos.forEach(id => document.getElementById(id).addEventListener('input', atualizarTermo));
 document.getElementById('tipo').addEventListener('change', atualizarTermo);
 
-// Habilita o botão de envio apenas se o checkbox for marcado
-
-... (demais código permanece igual) ...
-
-// NOVO: Preenche os campos com base nos parâmetros da URL (caso existam)
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
-
   const camposURL = {
     forma_pagamento: 'forma_pagamento',
     qtd_parcelas: 'qtd_parcelas',
     valor_parcela: 'valor_parcela',
     valor_total: 'valor_total'
   };
-
   for (const [param, idCampo] of Object.entries(camposURL)) {
     if (params.has(param)) {
       document.getElementById(idCampo).value = decodeURIComponent(params.get(param));
