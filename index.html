@@ -182,13 +182,18 @@ window.addEventListener('DOMContentLoaded', () => {
     forma_pagamento: 'forma_pagamento',
     qtd_parcelas: 'qtd_parcelas',
     valor_parcela: 'valor_parcela',
-    valor_total: 'valor_total'
+    valor_total: 'valor_total',
+    tipo_imovel: 'tipo',
+    metragem: 'area'
   };
+
   for (const [param, idCampo] of Object.entries(camposURL)) {
     if (params.has(param)) {
       document.getElementById(idCampo).value = decodeURIComponent(params.get(param));
     }
   }
+
+  atualizarTermo(); // Garante que o campo do termo seja atualizado ao abrir a página com os dados
 });
 </script>
 </body>
