@@ -142,6 +142,22 @@ const campos = ['nome', 'rg', 'orgao', 'cpf', 'uf', 'area', 'municipio', 'bairro
 campos.forEach(id => document.getElementById(id).addEventListener('input', atualizarTermo));
 document.getElementById('tipo').addEventListener('change', atualizarTermo);
 
+// Aplicar máscaras novamente (recolocadas)
+document.getElementById('cpf').addEventListener('input', e => {
+  e.target.value = e.target.value.replace(/\D/g, '')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+});
+
+document.getElementById('telefone').addEventListener('input', e => {
+  e.target.value = e.target.value.replace(/\D/g, '')
+    .replace(/(\d{2})(\d)/, '($1) $2')
+    .replace(/(\d{5})(\d)/, '$1-$2')
+    .substring(0, 15);
+});
+
+// Preencher campos com base nos parâmetros da URL
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const camposURL = {
