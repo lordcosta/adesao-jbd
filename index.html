@@ -126,13 +126,33 @@
 <script>
 function atualizarTermo() {
   const nome = document.getElementById('nome').value;
+  const rg = document.getElementById('rg').value;
+  const orgao = document.getElementById('orgao').value;
   const cpf = document.getElementById('cpf').value;
+  const area = document.getElementById('area').value;
   const municipio = document.getElementById('municipio').value;
+  const bairro = document.getElementById('bairro').value;
+  const rua = document.getElementById('rua').value;
+  const numero = document.getElementById('numero').value;
+  const telefone = document.getElementById('telefone').value;
   const tipo = document.getElementById('tipo').value;
 
-  const texto = `Declaro para os devidos fins que sou ${nome}, inscrito no CPF sob o nº ${cpf}, residente no município de ${municipio}, e que desejo aderir voluntariamente ao Programa de Regularização Fundiária Urbana (REURB) como imóvel de uso ${tipo.toLowerCase()}.`;
+  if (!nome || !rg || !orgao || !cpf || !area || !municipio || !bairro || !rua || !numero || !telefone || !tipo) {
+    document.getElementById('termo').value = ''; // Limpa o campo se incompleto
+    return;
+  }
+
+  const texto = `Eu, ${nome}, portador(a) da Carteira de Identidade nº ${rg}, ${orgao}, inscrito(a) no CPF/MF sob o nº ${cpf}, abaixo assinado, detentor da posse do imóvel de ${area}m² situado na cidade de ${municipio}, Bairro ${bairro}, Rua ${rua}, nº ${numero}, telefone ${telefone}, DECLARO que possuo interesse na realização da regularização fundiária REURB, nos termos da Lei Federal nº 13.465/2017 e Decreto Federal Nº 9.310, de 15 de março de 2018.
+
+Para dar efeito a este instrumento, firmo o presente TERMO DE ADESÃO, autorizando desde já a empresa JBD PRESTADORA DE SERVIÇOS, CONSULTORIA E ASSESSORIA LTDA, situada na Avenida Rubens Rangel, 459 – Sala 105 - Campo de Aviação – Marataízes/ES, inscrita sob o CNPJ Nº 33.181.342/0001-04, a execução dos serviços que se fizerem necessários, obedecidos os princípios legais que regem a REGULARIZAÇÃO FUNDIÁRIA URBANA, bem como a emissão do contrato e respectivos boletos nos moldes da presente proposta a ser escolhida, conforme as tabelas, em anexo.
+
+No caso de se verificar durante a execução do serviço que a metragem do imóvel é diferente da informada neste termo de adesão, o contrato será ajustado de acordo com a tabela, em anexo.
+
+DECLARO também estar ciente de que a viabilização da execução dos serviços ficará condicionada ao licenciamento urbanístico e aprovações junto ao município de ${municipio}.`;
+
   document.getElementById('termo').value = texto;
 }
+
 
 document.getElementById('aceite').addEventListener('change', function () {
   document.getElementById('enviar').disabled = !this.checked;
@@ -142,7 +162,6 @@ const campos = ['nome', 'rg', 'orgao', 'cpf', 'uf', 'area', 'municipio', 'bairro
 campos.forEach(id => document.getElementById(id).addEventListener('input', atualizarTermo));
 document.getElementById('tipo').addEventListener('change', atualizarTermo);
 
-// Aplicar máscaras novamente (recolocadas)
 document.getElementById('cpf').addEventListener('input', e => {
   e.target.value = e.target.value.replace(/\D/g, '')
     .replace(/(\d{3})(\d)/, '$1.$2')
@@ -157,7 +176,6 @@ document.getElementById('telefone').addEventListener('input', e => {
     .substring(0, 15);
 });
 
-// Preencher campos com base nos parâmetros da URL
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const camposURL = {
