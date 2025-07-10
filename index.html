@@ -110,11 +110,22 @@
     <label>Observação: <textarea id="observacao" style="min-height: 80px;"></textarea></label>
 
     <!-- Novos campos de pagamento -->
-    <label>Forma de pagamento: <input type="text" id="forma_pagamento" readonly></label>
-    <label>Qtd de parcelas: <input type="number" id="qtd_parcelas" readonly></label>
-    <label>Valor da parcela (R$): <input type="text" id="valor_parcela" readonly></label>
-    <label>Valor total (R$): <input type="text" id="valor_total" readonly></label>
+    <label>Forma de pagamento:
+      <input type="text" id="forma_pagamento" name="forma_pagamento" readonly>
+    </label>
 
+    <label>Qtd de parcelas:
+      <input type="number" id="qtd_parcelas" name="qtd_parcelas" readonly>
+    </label>
+
+  <label>Valor da parcela (R$):
+    <input type="text" id="valor_parcela" name="valor_parcela" readonly>
+  </label>
+
+  <label>Valor total (R$):
+    <input type="text" id="valor_total" name="valor_total" readonly>
+  </label>
+    
     <label>Termo de Adesão:</label>
     <textarea id="termo" readonly></textarea>
     <label class="checkbox">
