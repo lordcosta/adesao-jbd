@@ -22,49 +22,35 @@
       width: 100%;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    .logo {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    .logo img {
-      width: 120px;
-    }
-    h1 {
-      text-align: center;
-      color: #003366;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
+    .logo { text-align: center; margin-bottom: 20px; }
+    .logo img { width: 120px; }
+    h1 { text-align: center; color: #003366; }
+    label { display: block; margin-top: 10px; }
     input, select, textarea {
       width: 100%;
       padding: 8px;
       margin-top: 4px;
       border: 1px solid #ccc;
       border-radius: 4px;
+      box-sizing: border-box;
     }
-    textarea {
-      resize: vertical;
-      min-height: 200px;
-    }
-    .checkbox {
-      margin-top: 15px;
-    }
+    textarea { resize: vertical; min-height: 200px; }
+    .checkbox { margin-top: 15px; }
     button {
-      margin-top: 20px;
-      padding: 12px;
-      width: 100%;
-      border: none;
-      background-color: #003366;
-      color: white;
-      font-weight: bold;
-      border-radius: 4px;
-      cursor: pointer;
+      margin-top: 20px; padding: 12px; width: 100%;
+      border: none; background-color: #003366; color: white;
+      font-weight: bold; border-radius: 4px; cursor: pointer;
     }
-    button:disabled {
-      background-color: #999;
-      cursor: not-allowed;
+    button:disabled { background-color: #999; cursor: not-allowed; }
+
+    /* Destaque visual para campos travados */
+    .locked {
+      background-color: #f1f3f5;
+      color: #495057;
+      border-color: #dee2e6;
+    }
+    .hint {
+      font-size: 12px; color: #666; margin-top: 4px;
     }
   </style>
 </head>
@@ -74,11 +60,13 @@
     <img src="logo.png" alt="Logo JBD">
   </div>
   <h1>Adesão ao Programa REURB</h1>
+
   <form id="formAdesao">
     <label>Nome completo: <input type="text" id="nome" required></label>
     <label>RG: <input type="text" id="rg" required></label>
     <label>Órgão Expedidor: <input type="text" id="orgao" required></label>
     <label>CPF: <input type="text" id="cpf" required></label>
+
     <label>UF:
       <select id="uf" required>
         <option value="">Selecione</option>
@@ -91,38 +79,52 @@
         <option>SP</option><option>SE</option><option>TO</option>
       </select>
     </label>
-    <label>Área do imóvel (m²): <input type="text" id="area" required></label>
+
+    <!-- Área travada -->
+    <label>Área do imóvel (m²):
+      <input type="text" id="area" required readonly class="locked" title="Campo definido pela tabela do município">
+    </label>
+    <div class="hint">A metragem é definida pela tabela do município e não pode ser editada.</div>
+
     <label>Município: <input type="text" id="municipio" required></label>
     <label>Bairro: <input type="text" id="bairro" required></label>
     <label>Logradouro (Rua, Avenida, Travessa etc.): <input type="text" id="rua" required></label>
     <label>Número do imóvel: <input type="text" id="numero" required></label>
     <label>Complemento (Ex: casa B, fundos, apto 101): <input type="text" id="complemento"></label>
     <label>Telefone: <input type="tel" id="telefone" required></label>
+
+    <!-- Tipo travado (select desabilitado + hidden para submissão) -->
     <label>Tipo de imóvel:
-      <select id="tipo" required>
+      <select id="tipo" disabled class="locked" title="Campo definido pela tabela do município">
         <option value="">Selecione</option>
-        <option>Residencial</option>
-        <option>Não Residencial</option>
+        <option value="Residencial">Residencial</option>
+        <option value="Não Residencial">Não Residencial</option>
       </select>
+      <input type="hidden" id="tipo_hidden" name="tipo">
     </label>
+    <div class="hint">O tipo é definido pela tabela do município e não pode ser alterado.</div>
+
     <label>Indicação (quem indicou ou como ficou sabendo): <input type="text" id="indicacao"></label>
     <label>Observação: <textarea id="observacao" style="min-height: 80px;"></textarea></label>
 
-    <label>Forma de pagamento: <input type="text" id="forma_pagamento" name="forma_pagamento" readonly></label>
-    <label>Qtd de parcelas: <input type="number" id="qtd_parcelas" name="qtd_parcelas" readonly></label>
-    <label>Valor da parcela (R$): <input type="text" id="valor_parcela" name="valor_parcela" readonly></label>
-    <label>Valor total (R$): <input type="text" id="valor_total" name="valor_total" readonly></label>
+    <label>Forma de pagamento: <input type="text" id="forma_pagamento" name="forma_pagamento" readonly class="locked"></label>
+    <label>Qtd de parcelas: <input type="number" id="qtd_parcelas" name="qtd_parcelas" readonly class="locked"></label>
+    <label>Valor da parcela (R$): <input type="text" id="valor_parcela" name="valor_parcela" readonly class="locked"></label>
+    <label>Valor total (R$): <input type="text" id="valor_total" name="valor_total" readonly class="locked"></label>
 
     <label>Termo de Adesão:</label>
     <textarea id="termo" readonly></textarea>
+
     <label class="checkbox">
       <input type="checkbox" id="aceite">
       Declaro que os dados fornecidos são verdadeiros, que desejo aderir ao programa de REURB e autorizo contato por parte da JBD.
     </label>
     <button type="submit" id="enviar" disabled>✔ Aceito e Enviar</button>
   </form>
+
   <p style="text-align: right; font-size: 12px; color: #666; margin-top: 10px;">Versão: 1.0.0</p>
 </div>
+
 <script>
 function atualizarTermo() {
   const nome = document.getElementById('nome').value;
@@ -135,10 +137,10 @@ function atualizarTermo() {
   const rua = document.getElementById('rua').value;
   const numero = document.getElementById('numero').value;
   const telefone = document.getElementById('telefone').value;
-  const tipo = document.getElementById('tipo').value;
+  const tipo = document.getElementById('tipo_hidden').value || document.getElementById('tipo').value;
 
   if (!nome || !rg || !orgao || !cpf || !area || !municipio || !bairro || !rua || !numero || !telefone || !tipo) {
-    document.getElementById('termo').value = ''; // Limpa o campo se incompleto
+    document.getElementById('termo').value = '';
     return;
   }
 
@@ -157,27 +159,37 @@ document.getElementById('aceite').addEventListener('change', function () {
   document.getElementById('enviar').disabled = !this.checked;
 });
 
-const campos = ['nome', 'rg', 'orgao', 'cpf', 'uf', 'area', 'municipio', 'bairro', 'rua', 'numero', 'telefone'];
-campos.forEach(id => document.getElementById(id).addEventListener('input', atualizarTermo));
-document.getElementById('tipo').addEventListener('change', atualizarTermo);
+// Inputs que disparam atualização do termo
+const camposTexto = ['nome','rg','orgao','cpf','area','municipio','bairro','rua','numero','telefone'];
+camposTexto.forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', atualizarTermo);
+});
+
+// Selects (mudança)
+document.getElementById('uf').addEventListener('change', atualizarTermo);
+// "tipo" não é editável; atualizamos o termo quando o hidden mudar
+document.getElementById('tipo').addEventListener('change', () => {
+  document.getElementById('tipo_hidden').value = document.getElementById('tipo').value;
+  atualizarTermo();
+});
 
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
+
+  // Mapeamento de parâmetros aceitos na URL
   const camposURL = {
     forma_pagamento: 'forma_pagamento',
     qtd_parcelas: 'qtd_parcelas',
     valor_parcela: 'valor_parcela',
     valor_total: 'valor_total',
-    tipo_imovel: 'tipo',
+    tipo_imovel: 'tipo', // Select travado + hidden
     metragem: 'area'
   };
+
   for (const [param, idCampo] of Object.entries(camposURL)) {
     if (params.has(param)) {
-      document.getElementById(idCampo).value = decodeURIComponent(params.get(param));
-    }
-  }
-  atualizarTermo();
-});
-</script>
-</body>
-</html>
+      const val = decodeURIComponent(params.get(param));
+
+      if (idCampo === 'tipo') {
+        // Garantir que o select mostre o valor e que o hidden leve o valor
