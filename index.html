@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Adesão ao Programa REURB - JBD</title>
   <style>
     body {
@@ -82,9 +82,9 @@
 
     <!-- Área travada -->
     <label>Área do imóvel (m²):
-      <input type="text" id="area" required readonly class="locked" title="Campo definido pela tabela do município">
+      <input type="text" id="area" required readonly class="locked" title="Campo definido pela simulação/tabela do município">
     </label>
-    <div class="hint">A metragem é definida pela tabela do município e não pode ser editada.</div>
+    <div class="hint">A metragem é definida pela simulação/tabela do município e não pode ser editada.</div>
 
     <label>Município: <input type="text" id="municipio" required></label>
     <label>Bairro: <input type="text" id="bairro" required></label>
@@ -95,14 +95,14 @@
 
     <!-- Tipo travado (select desabilitado + hidden para submissão) -->
     <label>Tipo de imóvel:
-      <select id="tipo" disabled class="locked" title="Campo definido pela tabela do município">
+      <select id="tipo" disabled class="locked" title="Campo definido pela simulação/tabela do município">
         <option value="">Selecione</option>
         <option value="Residencial">Residencial</option>
         <option value="Não Residencial">Não Residencial</option>
       </select>
       <input type="hidden" id="tipo_hidden" name="tipo">
     </label>
-    <div class="hint">O tipo é definido pela tabela do município e não pode ser alterado.</div>
+    <div class="hint">O tipo é definido pela simulação/tabela do município e não pode ser alterado.</div>
 
     <label>Indicação (quem indicou ou como ficou sabendo): <input type="text" id="indicacao"></label>
     <label>Observação: <textarea id="observacao" style="min-height: 80px;"></textarea></label>
@@ -126,6 +126,77 @@
 </div>
 
 <script>
+/* ---------- Helpers p/ leitura dos parâmetros ---------- */
+function decodePlus(str) {
+  if (str == null) return "";
+  try {
+    return decodeURIComponent(String(str).replace(/\+/g, " "));
+  } catch {
+    return String(str).replace(/\+/g, " ");
+  }
+}
+function getFirstParam(params, names) {
+  for (const n of names) {
+    if (params.has(n)) return decodePlus(params.get(n));
+  }
+  return "";
+}
+function normalizeTipo(raw) {
+  const v = (raw || "").toString().trim();
+  if (/^residencial$/i.test(v)) return "Residencial";
+  if (/^(nao_residencial|não\s*residencial|nao\s*residencial)$/i.test(v)) return "Não Residencial";
+  // fallback: capitalize simples
+  return v ? v.charAt(0).toUpperCase() + v.slice(1) : "";
+}
+
+/* ---------- Preenchimento automático vindo da calculadora ---------- */
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+
+  const campoForma       = document.getElementById('forma_pagamento');
+  const campoParcelas    = document.getElementById('qtd_parcelas');
+  const campoParcela     = document.getElementById('valor_parcela');
+  const campoTotal       = document.getElementById('valor_total');
+  const selectTipo       = document.getElementById('tipo');         // desabilitado
+  const hiddenTipo       = document.getElementById('tipo_hidden');  // vai no POST
+  const campoArea        = document.getElementById('area');         // readonly
+
+  // aceita tanto 'tipo' quanto 'tipo_imovel'
+  const formaParam    = getFirstParam(params, ['forma_pagamento']);
+  const parcelasParam = getFirstParam(params, ['qtd_parcelas', 'parcelas']);
+  const parcelaParam  = getFirstParam(params, ['valor_parcela']);
+  const totalParam    = getFirstParam(params, ['valor_total', 'total']);
+  const tipoParamRaw  = getFirstParam(params, ['tipo', 'tipo_imovel']);
+  const metragem      = getFirstParam(params, ['metragem', 'area', 'metragem_total']);
+
+  const tipoNormalizado = normalizeTipo(tipoParamRaw);
+
+  if (campoForma)    campoForma.value    = formaParam;
+  if (campoParcelas) campoParcelas.value = parcelasParam;
+  if (campoParcela)  campoParcela.value  = parcelaParam;
+  if (campoTotal)    campoTotal.value    = totalParam;
+  if (campoArea)     campoArea.value     = metragem;
+
+  if (selectTipo && hiddenTipo) {
+    let opt = Array.from(selectTipo.options).find(o => o.value === tipoNormalizado);
+    if (!opt && tipoNormalizado) {
+      opt = document.createElement('option');
+      opt.value = tipoNormalizado;
+      opt.textContent = tipoNormalizado;
+      selectTipo.appendChild(opt);
+    }
+    if (tipoNormalizado) {
+      selectTipo.value = tipoNormalizado;
+      hiddenTipo.value = tipoNormalizado;
+    } else {
+      hiddenTipo.value = selectTipo.value || '';
+    }
+  }
+
+  if (typeof atualizarTermo === 'function') atualizarTermo();
+});
+
+/* ---------- Termo de adesão dinâmico (igual ao seu) ---------- */
 function atualizarTermo() {
   const nome = document.getElementById('nome').value;
   const rg = document.getElementById('rg').value;
@@ -160,36 +231,14 @@ document.getElementById('aceite').addEventListener('change', function () {
 });
 
 // Inputs que disparam atualização do termo
-const camposTexto = ['nome','rg','orgao','cpf','area','municipio','bairro','rua','numero','telefone'];
-camposTexto.forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('input', atualizarTermo);
-});
+['nome','rg','orgao','cpf','area','municipio','bairro','rua','numero','telefone']
+  .forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', atualizarTermo);
+  });
 
-// Selects (mudança)
+// Select UF
 document.getElementById('uf').addEventListener('change', atualizarTermo);
-// "tipo" não é editável; atualizamos o termo quando o hidden mudar
-document.getElementById('tipo').addEventListener('change', () => {
-  document.getElementById('tipo_hidden').value = document.getElementById('tipo').value;
-  atualizarTermo();
-});
-
-window.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(window.location.search);
-
-  // Mapeamento de parâmetros aceitos na URL
-  const camposURL = {
-    forma_pagamento: 'forma_pagamento',
-    qtd_parcelas: 'qtd_parcelas',
-    valor_parcela: 'valor_parcela',
-    valor_total: 'valor_total',
-    tipo_imovel: 'tipo', // Select travado + hidden
-    metragem: 'area'
-  };
-
-  for (const [param, idCampo] of Object.entries(camposURL)) {
-    if (params.has(param)) {
-      const val = decodeURIComponent(params.get(param));
-
-      if (idCampo === 'tipo') {
-        // Garantir que o select mostre o valor e que o hidden leve o valor
+</script>
+</body>
+</html>
