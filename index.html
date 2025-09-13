@@ -296,6 +296,70 @@ window.addEventListener('DOMContentLoaded', () => {
   if (typeof atualizarTermo === 'function') atualizarTermo();
 });
 </script>
+<script>
+// PATCH DROP-IN: Preencher campos a partir da URL (compatível com 'tipo' e 'tipo_imovel')
+// Cole este bloco DEPOIS dos seus scripts atuais (antes de </body>)
+(function () {
+  function decodePlus(str) {
+    if (str == null) return "";
+    try { return decodeURIComponent(String(str).replace(/\+/g, " ")); }
+    catch { return String(str).replace(/\+/g, " "); }
+  }
+  function getParam(params, ...names) {
+    for (const n of names) if (params.has(n)) return decodePlus(params.get(n));
+    return "";
+  }
+  function setIfExists(id, val) {
+    const el = document.getElementById(id);
+    if (el && val !== "") el.value = val;
+  }
+  function normalizeTipo(v) {
+    v = (v || "").trim();
+    if (/^residencial$/i.test(v)) return "Residencial";
+    if (/^(nao_residencial|não\s*residencial|nao\s*residencial)$/i.test(v)) return "Não Residencial";
+    return v ? v.charAt(0).toUpperCase() + v.slice(1) : "";
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const params = new URLSearchParams(location.search);
+
+    const forma    = getParam(params, 'forma_pagamento');
+    const parcelas = getParam(params, 'qtd_parcelas', 'parcelas');
+    const vParcela = getParam(params, 'valor_parcela');
+    const vTotal   = getParam(params, 'valor_total', 'total');
+    const tipoRaw  = getParam(params, 'tipo', 'tipo_imovel');
+    const metragem = getParam(params, 'metragem', 'area', 'metragem_total');
+
+    // Campos simples
+    setIfExists('forma_pagamento', forma);
+    setIfExists('qtd_parcelas', parcelas);
+    setIfExists('valor_parcela', vParcela);
+    setIfExists('valor_total', vTotal);
+    setIfExists('area', metragem);
+
+    // Tipo: select desabilitado + hidden p/ envio
+    const selectTipo = document.getElementById('tipo');
+    const hiddenTipo = document.getElementById('tipo_hidden');
+    const tipoNorm   = normalizeTipo(tipoRaw);
+
+    if (selectTipo && hiddenTipo && tipoNorm) {
+      let opt = Array.from(selectTipo.options).find(o => o.value === tipoNorm);
+      if (!opt) {
+        opt = document.createElement('option');
+        opt.value = tipoNorm;
+        opt.textContent = tipoNorm;
+        selectTipo.appendChild(opt);
+      }
+      selectTipo.value = tipoNorm;
+      hiddenTipo.value = tipoNorm;
+    }
+
+    // Atualiza o Termo/estado do aceite, se existirem
+    if (typeof atualizarTermo === 'function') atualizarTermo();
+    if (typeof syncAceiteEstado === 'function') syncAceiteEstado();
+  });
+})();
+</script>
 
 </body>
 </html>
