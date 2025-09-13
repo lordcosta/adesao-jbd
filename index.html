@@ -91,15 +91,15 @@
         <option>SP</option><option>SE</option><option>TO</option>
       </select>
     </label>
-    <label>Área do imóvel (m²): <input type="text" id="area" pattern="^[0-9]+([\.,][0-9]{1,2})?$" required></label>
-    <label>Município: <input type="text" id="municipio" required></label>
+    <label>Área do imóvel (m²): <input type="text" id="area" pattern="^[0-9]+([\.,][0-9]{1,2})?$" required readonly></label>
+    <label>Município: <input type="text" id="municipio" required readonly></label>
     <label>Bairro: <input type="text" id="bairro" required></label>
     <label>Logradouro (Rua, Avenida, Travessa etc.): <input type="text" id="rua" required></label>
     <label>Número do imóvel: <input type="text" id="numero" required></label>
     <label>Complemento (Ex: casa B, fundos, apto 101): <input type="text" id="complemento"></label>
     <label>Telefone: <input type="tel" id="telefone" required></label>
     <label>Tipo de imóvel:
-      <select id="tipo" required>
+      <select id="tipo" required disabled>
         <option value="">Selecione</option>
         <option>Residencial</option>
         <option>Não Residencial</option>
@@ -108,13 +108,14 @@
     <label>Indicação (quem indicou ou como ficou sabendo): <input type="text" id="indicacao"></label>
     <label>Observação: <textarea id="observacao" style="min-height: 80px;"></textarea></label>
 
-    <label>Forma de pagamento: <input type="text" id="forma_pagamento" name="forma_pagamento" readonly></label>
-    <label>Qtd de parcelas: <input type="number" id="qtd_parcelas" name="qtd_parcelas" readonly></label>
-    <label>Valor da parcela (R$): <input type="text" id="valor_parcela" name="valor_parcela" readonly></label>
-    <label>Valor total (R$): <input type="text" id="valor_total" name="valor_total" readonly></label>
+    <label>Forma de pagamento: <input type="text" id="forma_pagamento" readonly></label>
+    <label>Qtd de parcelas: <input type="number" id="qtd_parcelas" readonly></label>
+    <label>Valor da parcela (R$): <input type="text" id="valor_parcela" readonly></label>
+    <label>Valor total (R$): <input type="text" id="valor_total" readonly></label>
 
     <label>Termo de Adesão:</label>
     <textarea id="termo" readonly></textarea>
+
     <label class="checkbox">
       <input type="checkbox" id="aceite">
       Declaro que os dados fornecidos são verdadeiros, que desejo aderir ao programa de REURB e autorizo contato por parte da JBD.
@@ -123,6 +124,7 @@
   </form>
   <p style="text-align: right; font-size: 12px; color: #666; margin-top: 10px;">Versão: 1.0.0</p>
 </div>
+
 <script>
 function atualizarTermo() {
   const nome = document.getElementById('nome').value;
@@ -138,7 +140,7 @@ function atualizarTermo() {
   const tipo = document.getElementById('tipo').value;
 
   if (!nome || !rg || !orgao || !cpf || !area || !municipio || !bairro || !rua || !numero || !telefone || !tipo) {
-    document.getElementById('termo').value = ''; // Limpa o campo se incompleto
+    document.getElementById('termo').value = '';
     return;
   }
 
@@ -153,15 +155,17 @@ DECLARO também estar ciente de que a viabilização da execução dos serviços
   document.getElementById('termo').value = texto;
 }
 
-
+// Ativa/desativa o botão de envio
 document.getElementById('aceite').addEventListener('change', function () {
   document.getElementById('enviar').disabled = !this.checked;
 });
 
+// Monitora campos para atualizar o termo
 const campos = ['nome', 'rg', 'orgao', 'cpf', 'uf', 'area', 'municipio', 'bairro', 'rua', 'numero', 'telefone'];
 campos.forEach(id => document.getElementById(id).addEventListener('input', atualizarTermo));
 document.getElementById('tipo').addEventListener('change', atualizarTermo);
 
+// Máscaras
 document.getElementById('cpf').addEventListener('input', e => {
   e.target.value = e.target.value.replace(/\D/g, '')
     .replace(/(\d{3})(\d)/, '$1.$2')
@@ -176,6 +180,7 @@ document.getElementById('telefone').addEventListener('input', e => {
     .substring(0, 15);
 });
 
+// Ao carregar a página, preenche dados da URL
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const camposURL = {
@@ -184,16 +189,29 @@ window.addEventListener('DOMContentLoaded', () => {
     valor_parcela: 'valor_parcela',
     valor_total: 'valor_total',
     tipo_imovel: 'tipo',
-    metragem: 'area'
+    metragem: 'area',
+    municipio: 'municipio'
   };
 
   for (const [param, idCampo] of Object.entries(camposURL)) {
     if (params.has(param)) {
-      document.getElementById(idCampo).value = decodeURIComponent(params.get(param));
+      const el = document.getElementById(idCampo);
+      if (el) {
+        el.value = decodeURIComponent(params.get(param));
+        if (['area', 'tipo', 'municipio'].includes(idCampo)) {
+          el.dispatchEvent(new Event('input'));
+        }
+      }
     }
   }
 
-  atualizarTermo(); // Garante que o campo do termo seja atualizado ao abrir a página com os dados
+  // Força o tipo a emitir evento de alteração para atualizar o termo
+  const tipo = document.getElementById('tipo');
+  if (tipo.value) {
+    tipo.dispatchEvent(new Event('change'));
+  }
+
+  atualizarTermo(); // força a geração inicial
 });
 </script>
 </body>
