@@ -96,35 +96,31 @@
     <label>Bairro: <input type="text" id="bairro" required></label>
     <label>Logradouro (Rua, Avenida, Travessa etc.): <input type="text" id="rua" required></label>
     <label>Número do imóvel: <input type="text" id="numero" required></label>
-    <label>Complemento (Ex: casa B, fundos, apto 101): <input type="text" id="complemento"></label>
+    <label>Complemento: <input type="text" id="complemento"></label>
     <label>Telefone: <input type="tel" id="telefone" required></label>
     <label>Tipo de imóvel:
-      <select id="tipo" required disabled>
+      <select id="tipo" required readonly>
         <option value="">Selecione</option>
         <option>Residencial</option>
         <option>Não Residencial</option>
       </select>
     </label>
-    <label>Indicação (quem indicou ou como ficou sabendo): <input type="text" id="indicacao"></label>
+    <label>Indicação: <input type="text" id="indicacao"></label>
     <label>Observação: <textarea id="observacao" style="min-height: 80px;"></textarea></label>
-
     <label>Forma de pagamento: <input type="text" id="forma_pagamento" readonly></label>
     <label>Qtd de parcelas: <input type="number" id="qtd_parcelas" readonly></label>
     <label>Valor da parcela (R$): <input type="text" id="valor_parcela" readonly></label>
     <label>Valor total (R$): <input type="text" id="valor_total" readonly></label>
-
     <label>Termo de Adesão:</label>
     <textarea id="termo" readonly></textarea>
-
     <label class="checkbox">
       <input type="checkbox" id="aceite">
-      Declaro que os dados fornecidos são verdadeiros, que desejo aderir ao programa de REURB e autorizo contato por parte da JBD.
+      Declaro que os dados fornecidos são verdadeiros e autorizo contato por parte da JBD.
     </label>
     <button type="submit" id="enviar" disabled>✔ Aceito e Enviar</button>
   </form>
   <p style="text-align: right; font-size: 12px; color: #666; margin-top: 10px;">Versão: 1.0.0</p>
 </div>
-
 <script>
 function atualizarTermo() {
   const nome = document.getElementById('nome').value;
@@ -155,17 +151,14 @@ DECLARO também estar ciente de que a viabilização da execução dos serviços
   document.getElementById('termo').value = texto;
 }
 
-// Ativa/desativa o botão de envio
 document.getElementById('aceite').addEventListener('change', function () {
   document.getElementById('enviar').disabled = !this.checked;
 });
 
-// Monitora campos para atualizar o termo
 const campos = ['nome', 'rg', 'orgao', 'cpf', 'uf', 'area', 'municipio', 'bairro', 'rua', 'numero', 'telefone'];
 campos.forEach(id => document.getElementById(id).addEventListener('input', atualizarTermo));
 document.getElementById('tipo').addEventListener('change', atualizarTermo);
 
-// Máscaras
 document.getElementById('cpf').addEventListener('input', e => {
   e.target.value = e.target.value.replace(/\D/g, '')
     .replace(/(\d{3})(\d)/, '$1.$2')
@@ -180,7 +173,6 @@ document.getElementById('telefone').addEventListener('input', e => {
     .substring(0, 15);
 });
 
-// Ao carregar a página, preenche dados da URL
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const camposURL = {
@@ -192,26 +184,58 @@ window.addEventListener('DOMContentLoaded', () => {
     metragem: 'area',
     municipio: 'municipio'
   };
-
   for (const [param, idCampo] of Object.entries(camposURL)) {
     if (params.has(param)) {
-      const el = document.getElementById(idCampo);
-      if (el) {
-        el.value = decodeURIComponent(params.get(param));
-        if (['area', 'tipo', 'municipio'].includes(idCampo)) {
-          el.dispatchEvent(new Event('input'));
-        }
-      }
+      const valor = decodeURIComponent(params.get(param));
+      document.getElementById(idCampo).value = valor;
     }
   }
+  atualizarTermo();
+});
 
-  // Força o tipo a emitir evento de alteração para atualizar o termo
-  const tipo = document.getElementById('tipo');
-  if (tipo.value) {
-    tipo.dispatchEvent(new Event('change'));
+document.getElementById('formAdesao').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const dados = {
+    nome: document.getElementById('nome').value,
+    rg: document.getElementById('rg').value,
+    orgao: document.getElementById('orgao').value,
+    cpf: document.getElementById('cpf').value,
+    uf: document.getElementById('uf').value,
+    area: document.getElementById('area').value,
+    municipio: document.getElementById('municipio').value,
+    bairro: document.getElementById('bairro').value,
+    rua: document.getElementById('rua').value,
+    numero: document.getElementById('numero').value,
+    complemento: document.getElementById('complemento').value,
+    telefone: document.getElementById('telefone').value,
+    tipo: document.getElementById('tipo').value,
+    indicacao: document.getElementById('indicacao').value,
+    observacao: document.getElementById('observacao').value,
+    forma_pagamento: document.getElementById('forma_pagamento').value,
+    qtd_parcelas: document.getElementById('qtd_parcelas').value,
+    valor_parcela: document.getElementById('valor_parcela').value,
+    valor_total: document.getElementById('valor_total').value
+  };
+
+  try {
+    const resposta = await fetch('https://hook.us2.make.com/lq7d92kykma0i4l17absp7huwifbmy7r', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    });
+
+    if (resposta.ok) {
+      alert('Dados enviados com sucesso! ✅');
+      document.getElementById('formAdesao').reset();
+      document.getElementById('enviar').disabled = true;
+      document.getElementById('termo').value = '';
+    } else {
+      alert('Erro ao enviar. Tente novamente.');
+    }
+  } catch (erro) {
+    alert('Erro de conexão com o servidor.');
+    console.error(erro);
   }
-
-  atualizarTermo(); // força a geração inicial
 });
 </script>
 </body>
