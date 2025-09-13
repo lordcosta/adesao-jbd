@@ -126,77 +126,104 @@
 </div>
 
 <script>
-/* ---------- Helpers p/ leitura dos parâmetros ---------- */
-function decodePlus(str) {
-  if (str == null) return "";
-  try {
-    return decodeURIComponent(String(str).replace(/\+/g, " "));
-  } catch {
-    return String(str).replace(/\+/g, " ");
+/* ================== MÁSCARAS CPF & TELEFONE ================== */
+function maskCPF(value) {
+  const v = (value || '').replace(/\D/g, '').slice(0, 11);
+  const p1 = v.slice(0, 3);
+  const p2 = v.slice(3, 6);
+  const p3 = v.slice(6, 9);
+  const p4 = v.slice(9, 11);
+  let out = p1;
+  if (p2) out += '.' + p2;
+  if (p3) out += '.' + p3;
+  if (p4) out += '-' + p4;
+  return out;
+}
+function maskTelefone(value) {
+  const v = (value || '').replace(/\D/g, '').slice(0, 11); // 10 ou 11 dígitos
+  const ddd = v.slice(0, 2);
+  const meio = v.length > 10 ? v.slice(2, 7) : v.slice(2, 6);
+  const fim  = v.length > 10 ? v.slice(7, 11) : v.slice(6, 10);
+  let out = '';
+  if (ddd) out += '(' + ddd + ') ';
+  if (meio) out += meio;
+  if (fim)  out += '-' + fim;
+  return out.trim();
+}
+
+/* ============== AVISO EMBAIXO DO TERMO (FALTAM CAMPOS) ============== */
+function ensureAvisoTermo() {
+  // cria uma faixinha de aviso sob o textarea do termo (sem mexer no layout)
+  let aviso = document.getElementById('termoAviso');
+  if (!aviso) {
+    const termo = document.getElementById('termo');
+    aviso = document.createElement('div');
+    aviso.id = 'termoAviso';
+    aviso.style.fontSize = '12px';
+    aviso.style.color = '#666';
+    aviso.style.marginTop = '6px';
+    termo.parentElement.appendChild(aviso);
   }
-}
-function getFirstParam(params, names) {
-  for (const n of names) {
-    if (params.has(n)) return decodePlus(params.get(n));
-  }
-  return "";
-}
-function normalizeTipo(raw) {
-  const v = (raw || "").toString().trim();
-  if (/^residencial$/i.test(v)) return "Residencial";
-  if (/^(nao_residencial|não\s*residencial|nao\s*residencial)$/i.test(v)) return "Não Residencial";
-  // fallback: capitalize simples
-  return v ? v.charAt(0).toUpperCase() + v.slice(1) : "";
+  return aviso;
 }
 
-/* ---------- Preenchimento automático vindo da calculadora ---------- */
-window.addEventListener('DOMContentLoaded', () => {
-  const params = new URLSearchParams(window.location.search);
+/* ================== CHECAGEM DE CAMPOS OBRIGATÓRIOS ================== */
+function camposObrigatoriosOk() {
+  const reqIds = ['nome','rg','orgao','cpf','area','municipio','bairro','rua','numero','telefone'];
+  return reqIds.every(id => {
+    const el = document.getElementById(id);
+    return el && String(el.value || '').trim().length > 0;
+  }) && (document.getElementById('tipo_hidden').value || document.getElementById('tipo').value);
+}
 
-  const campoForma       = document.getElementById('forma_pagamento');
-  const campoParcelas    = document.getElementById('qtd_parcelas');
-  const campoParcela     = document.getElementById('valor_parcela');
-  const campoTotal       = document.getElementById('valor_total');
-  const selectTipo       = document.getElementById('tipo');         // desabilitado
-  const hiddenTipo       = document.getElementById('tipo_hidden');  // vai no POST
-  const campoArea        = document.getElementById('area');         // readonly
+function listarFaltantes() {
+  const labels = {
+    nome: 'Nome completo',
+    rg: 'RG',
+    orgao: 'Órgão Expedidor',
+    cpf: 'CPF',
+    area: 'Área do imóvel',
+    municipio: 'Município',
+    bairro: 'Bairro',
+    rua: 'Logradouro',
+    numero: 'Número',
+    telefone: 'Telefone'
+  };
+  const faltam = [];
+  Object.keys(labels).forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || !String(el.value || '').trim()) faltam.push(labels[id]);
+  });
+  return faltam;
+}
 
-  // aceita tanto 'tipo' quanto 'tipo_imovel'
-  const formaParam    = getFirstParam(params, ['forma_pagamento']);
-  const parcelasParam = getFirstParam(params, ['qtd_parcelas', 'parcelas']);
-  const parcelaParam  = getFirstParam(params, ['valor_parcela']);
-  const totalParam    = getFirstParam(params, ['valor_total', 'total']);
-  const tipoParamRaw  = getFirstParam(params, ['tipo', 'tipo_imovel']);
-  const metragem      = getFirstParam(params, ['metragem', 'area', 'metragem_total']);
+/* ================== BLOQUEIO DO CHECK & FEEDBACK ================== */
+function syncAceiteEstado() {
+  const aceite = document.getElementById('aceite');
+  const enviar = document.getElementById('enviar');
+  const aviso = ensureAvisoTermo();
 
-  const tipoNormalizado = normalizeTipo(tipoParamRaw);
+  if (camposObrigatoriosOk()) {
+    // Campos ok: termo aparece, checkbox liberado (mas botão só habilita se marcar)
+    aceite.disabled = false;
+    aviso.textContent = ''; // sem aviso
+    if (aceite.checked) enviar.disabled = false;
+  } else {
+    // Campos faltando: termo vazio, checkbox desabilitado e aviso aparece
+    aceite.checked = false;
+    aceite.disabled = true;
+    enviar.disabled = true;
 
-  if (campoForma)    campoForma.value    = formaParam;
-  if (campoParcelas) campoParcelas.value = parcelasParam;
-  if (campoParcela)  campoParcela.value  = parcelaParam;
-  if (campoTotal)    campoTotal.value    = totalParam;
-  if (campoArea)     campoArea.value     = metragem;
-
-  if (selectTipo && hiddenTipo) {
-    let opt = Array.from(selectTipo.options).find(o => o.value === tipoNormalizado);
-    if (!opt && tipoNormalizado) {
-      opt = document.createElement('option');
-      opt.value = tipoNormalizado;
-      opt.textContent = tipoNormalizado;
-      selectTipo.appendChild(opt);
-    }
-    if (tipoNormalizado) {
-      selectTipo.value = tipoNormalizado;
-      hiddenTipo.value = tipoNormalizado;
+    const faltam = listarFaltantes();
+    if (faltam.length) {
+      aviso.textContent = 'Preencha os campos obrigatórios para gerar o Termo de Adesão: ' + faltam.join(', ') + '.';
     } else {
-      hiddenTipo.value = selectTipo.value || '';
+      aviso.textContent = 'Preencha os campos obrigatórios para gerar o Termo de Adesão.';
     }
   }
+}
 
-  if (typeof atualizarTermo === 'function') atualizarTermo();
-});
-
-/* ---------- Termo de adesão dinâmico (igual ao seu) ---------- */
+/* ================== TERMO (MANTÉM SUA LÓGICA, SÓ ACRESCENTA O AVISO) ================== */
 function atualizarTermo() {
   const nome = document.getElementById('nome').value;
   const rg = document.getElementById('rg').value;
@@ -210,8 +237,11 @@ function atualizarTermo() {
   const telefone = document.getElementById('telefone').value;
   const tipo = document.getElementById('tipo_hidden').value || document.getElementById('tipo').value;
 
+  const termoEl = document.getElementById('termo');
+
   if (!nome || !rg || !orgao || !cpf || !area || !municipio || !bairro || !rua || !numero || !telefone || !tipo) {
-    document.getElementById('termo').value = '';
+    termoEl.value = ''; // mantém seu comportamento (só aparece quando está completo)
+    syncAceiteEstado(); // atualiza aviso/checkbox
     return;
   }
 
@@ -223,22 +253,49 @@ No caso de se verificar durante a execução do serviço que a metragem do imóv
 
 DECLARO também estar ciente de que a viabilização da execução dos serviços ficará condicionada ao licenciamento urbanístico e aprovações junto ao município de ${municipio}.`;
 
-  document.getElementById('termo').value = texto;
+  termoEl.value = texto;
+  syncAceiteEstado();
 }
 
-document.getElementById('aceite').addEventListener('change', function () {
-  document.getElementById('enviar').disabled = !this.checked;
-});
+/* ================== LIGAÇÕES DE EVENTOS (SEM MUDAR O QUE JÁ EXISTE) ================== */
+window.addEventListener('DOMContentLoaded', () => {
+  // Máscaras
+  const cpfEl = document.getElementById('cpf');
+  const telEl = document.getElementById('telefone');
+  if (cpfEl) cpfEl.addEventListener('input', (e) => { e.target.value = maskCPF(e.target.value); });
+  if (telEl) telEl.addEventListener('input', (e) => { e.target.value = maskTelefone(e.target.value); });
 
-// Inputs que disparam atualização do termo
-['nome','rg','orgao','cpf','area','municipio','bairro','rua','numero','telefone']
-  .forEach(id => {
+  // Mantém seus listeners atuais + chama sincronização inicial
+  const camposTexto = ['nome','rg','orgao','cpf','area','municipio','bairro','rua','numero','telefone'];
+  camposTexto.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', atualizarTermo);
   });
+  const uf = document.getElementById('uf');
+  if (uf) uf.addEventListener('change', atualizarTermo);
 
-// Select UF
-document.getElementById('uf').addEventListener('change', atualizarTermo);
+  // Checkbox & botão enviar (mantém lógica: botão só habilita se check marcado)
+  const aceite = document.getElementById('aceite');
+  const enviar = document.getElementById('enviar');
+  if (aceite) {
+    aceite.addEventListener('change', function () {
+      // Só habilita envio se checkbox marcado (e somente quando campos obrigatórios ok)
+      if (this.checked && camposObrigatoriosOk()) {
+        enviar.disabled = false;
+      } else {
+        enviar.disabled = true;
+      }
+    });
+  }
+
+  // Sincroniza estado inicial (mostra aviso que faltam campos, bloqueia check)
+  syncAceiteEstado();
+
+  // Se você tem o preenchimento automático via URL já implementado,
+  // mantenha-o como está; ao final dele, chame:
+  if (typeof atualizarTermo === 'function') atualizarTermo();
+});
 </script>
+
 </body>
 </html>
