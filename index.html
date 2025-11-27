@@ -49,8 +49,17 @@
       color: #495057;
       border-color: #dee2e6;
     }
+    .locked:focus {
+      outline: 2px solid #003366;
+      background-color: #e9ecef;
+    }
     .hint {
       font-size: 12px; color: #666; margin-top: 4px;
+    }
+    .error {
+      color: #c92a2a;
+      font-size: 12px;
+      margin-top: 4px;
     }
   </style>
 </head>
@@ -149,6 +158,37 @@ function maskTelefone(value) {
   if (meio) out += meio;
   if (fim)  out += '-' + fim;
   return out.trim();
+}
+
+function setValidationMessage(el, message) {
+  if (!el) return;
+  const existing = el.parentElement.querySelector('.error');
+  if (existing) existing.remove();
+  el.setCustomValidity(message || '');
+  if (message) {
+    const span = document.createElement('div');
+    span.className = 'error';
+    span.textContent = message;
+    el.parentElement.appendChild(span);
+  }
+}
+
+function validateCPF(el) {
+  const digits = (el.value || '').replace(/\D/g, '');
+  if (digits.length === 11) {
+    setValidationMessage(el, '');
+  } else {
+    setValidationMessage(el, 'Informe os 11 dígitos do CPF.');
+  }
+}
+
+function validateTelefone(el) {
+  const digits = (el.value || '').replace(/\D/g, '');
+  if (digits.length === 10 || digits.length === 11) {
+    setValidationMessage(el, '');
+  } else {
+    setValidationMessage(el, 'Informe o telefone com DDD (10 ou 11 dígitos).');
+  }
 }
 
 /* ============== AVISO EMBAIXO DO TERMO (FALTAM CAMPOS) ============== */
@@ -262,8 +302,14 @@ window.addEventListener('DOMContentLoaded', () => {
   // Máscaras
   const cpfEl = document.getElementById('cpf');
   const telEl = document.getElementById('telefone');
-  if (cpfEl) cpfEl.addEventListener('input', (e) => { e.target.value = maskCPF(e.target.value); });
-  if (telEl) telEl.addEventListener('input', (e) => { e.target.value = maskTelefone(e.target.value); });
+  if (cpfEl) {
+    cpfEl.addEventListener('input', (e) => { e.target.value = maskCPF(e.target.value); });
+    cpfEl.addEventListener('blur', () => validateCPF(cpfEl));
+  }
+  if (telEl) {
+    telEl.addEventListener('input', (e) => { e.target.value = maskTelefone(e.target.value); });
+    telEl.addEventListener('blur', () => validateTelefone(telEl));
+  }
 
   // Mantém seus listeners atuais + chama sincronização inicial
   const camposTexto = ['nome','rg','orgao','cpf','area','municipio','bairro','rua','numero','telefone'];
@@ -309,15 +355,27 @@ window.addEventListener('DOMContentLoaded', () => {
     for (const n of names) if (params.has(n)) return decodePlus(params.get(n));
     return "";
   }
-  function setIfExists(id, val) {
+  function setIfExists(id, val, transform) {
     const el = document.getElementById(id);
-    if (el && val !== "") el.value = val;
+    if (el && val !== "") {
+      el.value = typeof transform === 'function' ? transform(val) : val;
+    }
   }
   function normalizeTipo(v) {
     v = (v || "").trim();
     if (/^residencial$/i.test(v)) return "Residencial";
     if (/^(nao_residencial|não\s*residencial|nao\s*residencial)$/i.test(v)) return "Não Residencial";
     return v ? v.charAt(0).toUpperCase() + v.slice(1) : "";
+  }
+  function formatCurrency(val) {
+    const normalized = String(val || '').replace(/[^0-9,.-]/g, '').replace(',', '.');
+    const num = Number(normalized);
+    return Number.isFinite(num) ? num.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : val;
+  }
+  function formatNumber(val) {
+    const normalized = String(val || '').replace(/[^0-9,.-]/g, '').replace(',', '.');
+    const num = Number(normalized);
+    return Number.isFinite(num) ? num.toLocaleString('pt-BR') : val;
   }
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -332,10 +390,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Campos simples
     setIfExists('forma_pagamento', forma);
-    setIfExists('qtd_parcelas', parcelas);
-    setIfExists('valor_parcela', vParcela);
-    setIfExists('valor_total', vTotal);
-    setIfExists('area', metragem);
+    setIfExists('qtd_parcelas', parcelas, formatNumber);
+    setIfExists('valor_parcela', vParcela, formatCurrency);
+    setIfExists('valor_total', vTotal, formatCurrency);
+    setIfExists('area', metragem, formatNumber);
 
     // Tipo: select desabilitado + hidden p/ envio
     const selectTipo = document.getElementById('tipo');
